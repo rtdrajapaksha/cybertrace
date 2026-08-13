@@ -1,0 +1,1 @@
+-- Placeholder: Sample/seed data for local development (schema/query to be added later)
