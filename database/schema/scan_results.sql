@@ -1,1 +1,0 @@
--- Placeholder: Scan Results table schema (schema/query to be added later)

@@ -1,1 +1,0 @@
--- Placeholder: Recommendations table schema (schema/query to be added later)
