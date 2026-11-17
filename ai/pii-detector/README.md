@@ -5,9 +5,9 @@ username scan, and labels each item: `NAME`, `EMAIL`, `PHONE`, `DOB`,
 `ADDRESS`, `EMPLOYER`, `SCHOOL`, `LOCATION`. Each item found can become a
 `scan_results` row, which the existing rule-based scoring then scores.
 
-> **Scope note.** The Capstone proposal lists ML models as out of scope.
-> Confirm this addition with the supervisor and record it as a scope change
-> in the final report.
+> **Scope note.** The Capstone proposal listed ML models as out of scope.
+> The lecturer has since approved this module as in scope (confirmed by the
+> project owner, Nov 2026). Record it as a scope change in the final report.
 
 ## Status (18 Nov 2026)
 
