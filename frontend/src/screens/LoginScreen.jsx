@@ -1,13 +1,28 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator,
+} from 'react-native';
+import { signIn, validateCredentials } from '../services/authService';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: replace with real Supabase authentication call
-    navigation.navigate('Dashboard');
+  // On success the auth listener in App.js switches to the Dashboard.
+  const handleLogin = async () => {
+    const problem = validateCredentials({ email, password });
+    if (problem) return setError(problem);
+
+    setError('');
+    setSubmitting(true);
+    try {
+      await signIn({ email, password });
+    } catch (e) {
+      setError(e.message);
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -44,8 +59,16 @@ export default function LoginScreen({ navigation }) {
           />
         </View>
 
-        <Pressable style={styles.primaryButton} onPress={handleLogin}>
-          <Text style={styles.primaryButtonText}>Log In</Text>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <Pressable
+          style={[styles.primaryButton, submitting && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={submitting}
+        >
+          {submitting
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <Text style={styles.primaryButtonText}>Log In</Text>}
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate('Register')}>
@@ -103,6 +126,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  errorText: {
+    color: '#F87171',
+    fontSize: 14,
   },
   primaryButtonText: {
     color: '#FFFFFF',

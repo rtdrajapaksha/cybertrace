@@ -1,17 +1,38 @@
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { useAuth } from '../state/authStore';
+import { getProfile, signOut } from '../services/authService';
 
-// Placeholder dashboard: confirms the auth navigation flow lands somewhere.
-// Real dashboard content (risk score, scan history, etc.) comes in a later phase.
-export default function UserDashboardScreen({ navigation }) {
+// Placeholder dashboard: proves the user is really logged in by loading
+// their row from public.users. Real content (risk score, scan history)
+// comes in a later phase.
+export default function UserDashboardScreen() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    getProfile(user.id)
+      .then(setProfile)
+      .catch((e) => setError(e.message));
+  }, [user]);
+
+  // After sign out, App.js switches back to the Landing screen.
+  const handleLogout = () => signOut().catch((e) => setError(e.message));
+
+  const name = profile?.first_name || user?.email;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
-      <Text style={styles.subtitle}>You're logged in. Dashboard content coming soon.</Text>
+      <Text style={styles.subtitle}>
+        {name ? `Welcome, ${name}!` : 'Loading your profile…'}
+      </Text>
+      {profile ? <Text style={styles.meta}>{profile.email} · {profile.plan} plan</Text> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <Pressable
-        style={styles.logoutButton}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Landing' }] })}
-      >
+      <Pressable style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Log Out</Text>
       </Pressable>
     </View>
@@ -33,8 +54,19 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: 16,
+    color: '#E2E8F0',
+    textAlign: 'center',
+  },
+  meta: {
+    marginTop: 6,
+    fontSize: 13,
     color: '#94A3B8',
+  },
+  errorText: {
+    marginTop: 12,
+    color: '#F87171',
+    fontSize: 14,
     textAlign: 'center',
   },
   logoutButton: {

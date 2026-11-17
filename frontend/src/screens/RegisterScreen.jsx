@@ -1,15 +1,39 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator,
+} from 'react-native';
+import { signUp, validateRegistration } from '../services/authService';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleRegister = () => {
-    // TODO: replace with real Supabase registration call
-    navigation.navigate('Dashboard');
+  // If Supabase logs the user in straight away, App.js switches to the
+  // Dashboard. If email confirmation is on, we tell them to check their inbox.
+  const handleRegister = async () => {
+    const form = { firstName, lastName, email, password };
+    const problem = validateRegistration(form);
+    if (problem) return setError(problem);
+
+    setError('');
+    setInfo('');
+    setSubmitting(true);
+    try {
+      const { needsEmailConfirmation } = await signUp(form);
+      if (needsEmailConfirmation) {
+        setInfo('Account created! Check your email to confirm it, then log in.');
+        setPassword('');
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -69,8 +93,17 @@ export default function RegisterScreen({ navigation }) {
           />
         </View>
 
-        <Pressable style={styles.primaryButton} onPress={handleRegister}>
-          <Text style={styles.primaryButtonText}>Sign Up</Text>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {info ? <Text style={styles.infoText}>{info}</Text> : null}
+
+        <Pressable
+          style={[styles.primaryButton, submitting && styles.buttonDisabled]}
+          onPress={handleRegister}
+          disabled={submitting}
+        >
+          {submitting
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <Text style={styles.primaryButtonText}>Sign Up</Text>}
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate('Login')}>
@@ -135,6 +168,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  errorText: {
+    color: '#F87171',
+    fontSize: 14,
+  },
+  infoText: {
+    color: '#34D399',
+    fontSize: 14,
   },
   primaryButtonText: {
     color: '#FFFFFF',
