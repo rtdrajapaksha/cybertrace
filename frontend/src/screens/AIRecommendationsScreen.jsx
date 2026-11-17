@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Card, EmptyState, IconBubble, IconButton, Muted, RiskBadge, Screen, T,
+  BlockBar, Card, EmptyState, IconBubble, IconButton, PageTitle, RiskBadge, Screen, T,
 } from '../components/ui';
 import { font, radius, space, useTheme } from '../theme/theme';
 import { useScans } from '../state/scanStore';
@@ -67,7 +67,7 @@ export default function AIRecommendationsScreen({ route, navigation }) {
   if (!scan) {
     return (
       <Screen>
-        <T variant="h1" style={{ marginVertical: space.md }}>Privacy tips</T>
+        <PageTitle prompt="tips" title="Privacy tips" />
         <EmptyState
           icon="bulb"
           title="No tips yet"
@@ -85,23 +85,16 @@ export default function AIRecommendationsScreen({ route, navigation }) {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        {fromStack ? <IconButton icon="arrow-back" onPress={() => navigation.goBack()} label="Go back" /> : null}
-        <View style={{ flex: 1 }}>
-          <T variant="h1">Privacy tips</T>
-          <Muted numberOfLines={1}>For {scan.identifier}</Muted>
-        </View>
-      </View>
+      {fromStack ? <IconButton icon="arrow-back" onPress={() => navigation.goBack()} label="Go back" /> : null}
+      <PageTitle prompt="tips" title="Privacy tips" subtitle={`For ${scan.identifier}`} />
 
-      <Card tone="primary" style={{ gap: space.sm + 4 }}>
+      <Card highlight style={{ gap: space.sm + 4 }}>
         <View style={styles.progressTop}>
-          <Text style={[styles.progressTitle, { color: colors.onPrimary }]}>{done} of {total} done</Text>
-          <Text style={[styles.progressPct, { color: colors.lime === colors.primary ? colors.onPrimary : colors.lime }]}>{pct}%</Text>
+          <Text style={[styles.progressTitle, { color: colors.text }]}>{done} of {total} done</Text>
+          <Text style={[styles.progressPct, { color: colors.primary }]}>{pct}%</Text>
         </View>
-        <View style={[styles.track, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-          <View style={[styles.fill, { width: `${pct}%`, backgroundColor: colors.lime === colors.primary ? colors.onPrimary : colors.lime }]} />
-        </View>
-        <Text style={[styles.progressText, { color: colors.onPrimaryMuted }]}>
+        <BlockBar value={done} max={Math.max(total, 1)} segments={Math.max(total, 1) * 4} />
+        <Text style={[styles.progressText, { color: colors.textMuted }]}>
           Highest priority first. Tap a tip to see why it matters and how to fix it.
         </Text>
       </Card>

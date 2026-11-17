@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Banner, Card, ConfirmDialog, Field, IconButton, ListRow, Muted, Pill, Screen, T, formatDate,
+  Banner, Card, ConfirmDialog, Field, IconButton, ListRow, Muted, PageTitle, PasswordStrength, Pill, Screen, T, formatDate,
 } from '../components/ui';
-import { font, space, useTheme } from '../theme/theme';
+import { font, mono, space, useTheme } from '../theme/theme';
 import { useAuth } from '../state/authStore';
 import { useScans } from '../state/scanStore';
-import { changePassword, signOut, updateProfile } from '../services/authService';
+import {
+  PASSWORD_RULES, changePassword, passwordStrength, signOut, updateProfile,
+} from '../services/authService';
 
 export default function UserProfileScreen({ navigation }) {
   const { colors } = useTheme();
@@ -51,10 +53,11 @@ export default function UserProfileScreen({ navigation }) {
 
   return (
     <Screen>
-      <View style={styles.top}>
-        <T variant="h1">Profile</T>
-        <IconButton icon="settings-outline" onPress={() => navigation.navigate('Settings')} label="Open settings" />
-      </View>
+      <PageTitle
+        prompt="whoami"
+        title="Profile"
+        right={<IconButton icon="settings-outline" onPress={() => navigation.navigate('Settings')} label="Open settings" />}
+      />
 
       <Card style={styles.idCard}>
         <View style={[styles.avatar, { backgroundColor: colors.lavender, borderColor: colors.card }]}>
@@ -72,15 +75,15 @@ export default function UserProfileScreen({ navigation }) {
 
       {toast ? <View style={{ marginTop: space.md }}><Banner tone="mint" icon="checkmark-circle" text={toast} /></View> : null}
 
-      <Card tone="primary" style={styles.stats}>
+      <Card highlight style={styles.stats}>
         {[
-          { label: 'Scans', value: scans.length },
-          { label: 'Findings', value: findings },
-          { label: 'Tips done', value: tipsDone },
+          { label: 'scans', value: scans.length },
+          { label: 'findings', value: findings },
+          { label: 'tips_done', value: tipsDone },
         ].map((s, i) => (
-          <View key={s.label} style={[styles.stat, i > 0 && { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.15)' }]}>
-            <Text style={[styles.statValue, { color: colors.onPrimary }]}>{s.value}</Text>
-            <Text style={[styles.statLabel, { color: colors.onPrimaryMuted }]}>{s.label}</Text>
+          <View key={s.label} style={[styles.stat, i > 0 && { borderLeftWidth: 1, borderLeftColor: colors.border }]}>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{s.value}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted, fontFamily: mono }]}>{s.label}</Text>
           </View>
         ))}
       </Card>
@@ -89,7 +92,10 @@ export default function UserProfileScreen({ navigation }) {
       <Card style={{ paddingVertical: 4 }}>
         <ListRow icon="person-outline" tone="lavender" title="Edit name" subtitle="Update how your name appears" onPress={() => open('name')} />
         <ListRow icon="key-outline" tone="peach" title="Change password" subtitle="Set a new password for your account" onPress={() => open('password')} />
-        <ListRow icon="settings-outline" tone="sky" title="Settings" subtitle="Appearance, notifications and data" onPress={() => navigation.navigate('Settings')} last />
+        <ListRow icon="settings-outline" tone="sky" title="Settings" subtitle="Appearance, notifications and data" onPress={() => navigation.navigate('Settings')} last={profile?.role !== 'admin'} />
+        {profile?.role === 'admin' ? (
+          <ListRow icon="shield-checkmark-outline" tone="peach" title="Admin dashboard" subtitle="Users, sign-ups and activity" onPress={() => navigation.navigate('Admin')} last />
+        ) : null}
       </Card>
 
       <Card style={{ paddingVertical: 4, marginTop: space.md }}>
@@ -113,13 +119,14 @@ export default function UserProfileScreen({ navigation }) {
       <ConfirmDialog
         visible={dialog === 'password'}
         title="Change password"
-        message="Use at least 8 characters. A password you don’t use anywhere else is best."
+        message="Use 8+ characters with at least 3 of: lowercase, uppercase, number, symbol. A password you don’t use anywhere else is best."
         confirmLabel="Change password"
         onCancel={() => setDialog(null)}
         onConfirm={savePassword}
       >
         <View style={{ gap: space.md, marginTop: space.md }}>
           <Field label="New password" icon="lock-closed-outline" value={password} onChangeText={setPassword} secure autoComplete="new-password" />
+          <PasswordStrength password={password} strength={passwordStrength(password)} rules={PASSWORD_RULES} />
           {error ? <Banner tone="danger" icon="alert-circle" text={error} /> : null}
         </View>
       </ConfirmDialog>

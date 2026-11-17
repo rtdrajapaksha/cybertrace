@@ -54,10 +54,16 @@ export function Sheet({ children, style }) {
   );
 }
 
-export function Card({ children, style, onPress, tone }) {
+// highlight = neon outline, used for the one card that needs attention.
+export function Card({ children, style, onPress, tone, highlight }) {
   const { colors } = useTheme();
   const bg = tone ? colors[tone] : colors.card;
-  const content = <View style={[styles.card, { backgroundColor: bg }, style]}>{children}</View>;
+  const border = highlight ? colors.primary : colors.border;
+  const content = (
+    <View style={[styles.card, { backgroundColor: bg, borderColor: border, borderWidth: highlight ? 1.5 : 1 }, style]}>
+      {children}
+    </View>
+  );
   if (!onPress) return content;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }}>
@@ -66,17 +72,58 @@ export function Card({ children, style, onPress, tone }) {
   );
 }
 
+// Terminal-style section title: "> recent scans".
 export function SectionHeader({ title, actionLabel, onAction, style }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.sectionHeader, style]}>
-      <Text style={[type.h3, { color: colors.text }]}>{title}</Text>
+      <Text style={{ fontFamily: mono, fontSize: 14, color: colors.text }}>
+        <Text style={{ color: colors.primary }}>&gt; </Text>{title.toLowerCase()}
+      </Text>
       {actionLabel ? (
         <Pressable onPress={onAction} hitSlop={8} style={styles.row}>
-          <Text style={[type.label, { color: colors.textMuted }]}>{actionLabel}</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+          <Text style={{ fontFamily: mono, fontSize: 12, color: colors.textMuted }}>{actionLabel.toLowerCase()}</Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
         </Pressable>
       ) : null}
+    </View>
+  );
+}
+
+// Page title with a small "$ command" line above it.
+export function PageTitle({ prompt, title, subtitle, right, style }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, marginTop: space.sm, marginBottom: space.md }, style]}>
+      <View style={{ flex: 1 }}>
+        {prompt ? <Text style={{ fontFamily: mono, fontSize: 12, color: colors.primary, marginBottom: 2 }}>$ {prompt}</Text> : null}
+        <Text style={[type.h1, { color: colors.text }]}>{title}</Text>
+        {subtitle ? <Text style={[type.small, { color: colors.textMuted }]} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
+      {right}
+    </View>
+  );
+}
+
+// Monospace text, for terminal-style labels and values.
+export function Mono({ children, color, size = 13, style, ...rest }) {
+  const { colors } = useTheme();
+  return (
+    <Text style={[{ fontFamily: mono, fontSize: size, lineHeight: size * 1.6, color: color || colors.text }, style]} {...rest}>
+      {children}
+    </Text>
+  );
+}
+
+// Segmented bar like ▮▮▮▮▮▯▯▯▯▯ — `value` out of `max`.
+export function BlockBar({ value, max = 100, segments = 20, color, height = 8 }) {
+  const { colors } = useTheme();
+  const filled = Math.round((Math.min(value, max) / max) * segments);
+  return (
+    <View style={{ flexDirection: 'row', gap: 2 }} accessibilityLabel={`${value} out of ${max}`}>
+      {Array.from({ length: segments }, (_, i) => (
+        <View key={i} style={{ flex: 1, height, borderRadius: 2, backgroundColor: i < filled ? (color || colors.primary) : colors.cardAlt }} />
+      ))}
     </View>
   );
 }
@@ -255,6 +302,36 @@ export function Banner({ text, tone = 'sky', icon = 'information-circle' }) {
   );
 }
 
+// Strength bar + checklist shown under a new-password field.
+export function PasswordStrength({ password, strength, rules }) {
+  const { colors } = useTheme();
+  if (!password) return null;
+  const tone = [colors.border, colors.risk.CRITICAL.fg, colors.risk.MEDIUM.fg, colors.risk.LOW.fg, colors.risk.LOW.fg][strength.score];
+  return (
+    <View style={{ gap: 8, marginTop: -4 }} accessibilityLabel={`Password strength: ${strength.label}`}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <View key={i} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: i <= strength.score ? tone : colors.border }} />
+          ))}
+        </View>
+        <Text style={[type.label, { color: tone, minWidth: 52, textAlign: 'right' }]}>{strength.label}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {rules.map((r) => {
+          const ok = strength.passed.has(r.key);
+          return (
+            <View key={r.key} style={[styles.pill, { backgroundColor: ok ? colors.mint : colors.cardAlt }]}>
+              <Ionicons name={ok ? 'checkmark' : 'ellipse-outline'} size={12} color={ok ? colors.mintInk : colors.textMuted} />
+              <Text style={[type.caption, { color: ok ? colors.mintInk : colors.textMuted }]}>{r.label}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 // ---------- lists ----------
 
 export function ListRow({ icon, tone = 'mint', title, subtitle, onPress, right, danger, last }) {
@@ -363,7 +440,7 @@ const styles = StyleSheet.create({
     padding: space.lg,
     flexGrow: 1,
   },
-  card: { borderRadius: radius.card, padding: space.md + 4 },
+  card: { borderRadius: radius.tile, padding: space.md + 2 },
   sectionHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginTop: space.lg, marginBottom: space.sm + 4,

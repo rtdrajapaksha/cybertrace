@@ -48,10 +48,11 @@ const dark = {
   onPrimaryMuted: '#145A33',
   lime: '#39FF88',
   onLime: '#07110D',
-  lavender: '#1A1F3A', lavenderInk: '#A9B4FF',
-  peach: '#2E1A14',    peachInk: '#FF9B7A',
-  mint: '#0F2E1E',     mintInk: '#39FF88',
-  sky: '#0F2333',      skyInk: '#6CC8FF',
+  // Terminal style: no pastel blocks — dark chips with coloured ink.
+  lavender: '#12291F', lavenderInk: '#A9B4FF',
+  peach: '#12291F',    peachInk: '#FF9B7A',
+  mint: '#12291F',     mintInk: '#39FF88',
+  sky: '#12291F',      skyInk: '#6CC8FF',
   danger: '#FF5C7A',
   overlay: 'rgba(0, 0, 0, 0.7)',
   risk: {

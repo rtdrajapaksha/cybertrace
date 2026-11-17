@@ -1,7 +1,9 @@
-// Circular risk gauge: number + level label + icon (report 3.4.2).
+// Risk score: big number + level (colour, icon and words) + block bar.
+// ScoreGauge (the ring) is still used on the report screen.
 import { StyleSheet, View, Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { Card, Muted, RiskBadge, T } from './ui';
+import { Ionicons } from '@expo/vector-icons';
+import { BlockBar, Card, Mono, T } from './ui';
 import { font, space, useTheme } from '../theme/theme';
 import { RISK_COPY } from '../utils/riskScoring';
 
@@ -35,24 +37,35 @@ export function ScoreGauge({ score, level, size = 132, stroke = 12 }) {
   );
 }
 
-export default function RiskScoreCard({ scan, title = 'Privacy risk score', footer, onPress }) {
+export default function RiskScoreCard({ scan, title = 'risk_score', footer, onPress }) {
+  const { colors } = useTheme();
+  const risk = colors.risk[scan.risk_level];
   const copy = RISK_COPY[scan.risk_level];
   return (
-    <Card onPress={onPress}>
-      <View style={styles.row}>
-        <View style={{ flex: 1, gap: space.sm }}>
-          <Muted variant="label">{title.toUpperCase()}</Muted>
-          <RiskBadge level={scan.risk_level} label={copy.label} />
-          <T variant="small" style={{ marginTop: 2 }}>{copy.summary}</T>
-        </View>
-        <ScoreGauge score={scan.risk_score} level={scan.risk_level} />
+    <Card onPress={onPress} style={{ gap: space.sm + 2 }}>
+      <View style={styles.top}>
+        <Mono size={12} color={colors.textMuted}>{title}</Mono>
+        <Mono size={12} color={colors.textMuted} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'right' }}>{scan.identifier}</Mono>
       </View>
+      <View style={styles.scoreRow}>
+        <Text style={[styles.score, { color: risk.fg }]}>{scan.risk_score}</Text>
+        <Mono size={14} color={colors.textMuted}>/100</Mono>
+        <View style={styles.level}>
+          <Ionicons name={risk.icon} size={14} color={risk.fg} />
+          <Mono size={13} color={risk.fg}>{scan.risk_level}</Mono>
+        </View>
+      </View>
+      <BlockBar value={scan.risk_score} color={risk.fg} />
+      <T variant="small" color={colors.textMuted}>{copy.summary}</T>
       {footer}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   center: { alignItems: 'center', justifyContent: 'center' },
+  top: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md },
+  scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  score: { fontFamily: font.bold, fontSize: 52, lineHeight: 58 },
+  level: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
 });

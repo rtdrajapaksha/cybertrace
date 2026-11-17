@@ -25,6 +25,8 @@ import PreviousReportsScreen from './src/screens/PreviousReportsScreen';
 import ReportPreviewScreen from './src/screens/ReportPreviewScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
+import AdminDashboardScreen from './src/screens/AdminDashboardScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -43,10 +45,12 @@ function MainTabs() {
 }
 
 // Logged out -> Landing / Login / Register.
-// Logged in  -> tabs + detail screens. Switching happens automatically
-// when the Supabase session changes.
+// Opened a password-reset link -> Set a new password, nothing else.
+// Logged in  -> tabs + detail screens (+ Admin for admins).
+// Switching happens automatically when the Supabase session changes.
 function RootNavigator() {
-  const { session, loading } = useAuth();
+  const { session, loading, recovering, profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const { colors } = useTheme();
 
   if (loading) {
@@ -59,7 +63,9 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-      {session ? (
+      {session && recovering ? (
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      ) : session ? (
         <>
           <Stack.Screen name="Tabs" component={MainTabs} />
           <Stack.Screen name="AnalysisInProgress" component={AnalysisInProgressScreen} options={{ gestureEnabled: false }} />
@@ -67,6 +73,7 @@ function RootNavigator() {
           <Stack.Screen name="Recommendations" component={AIRecommendationsScreen} />
           <Stack.Screen name="ReportPreview" component={ReportPreviewScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          {isAdmin ? <Stack.Screen name="Admin" component={AdminDashboardScreen} /> : null}
         </>
       ) : (
         <>

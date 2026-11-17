@@ -10,6 +10,8 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // True after the user opens a password-reset link, until they set a new one.
+  const [recovering, setRecovering] = useState(false);
   const userId = session?.user?.id ?? null;
 
   useEffect(() => {
@@ -20,8 +22,10 @@ export function AuthProvider({ children }) {
     });
 
     // Fires on sign in, sign out and token refresh.
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true);
+      if (event === 'SIGNED_OUT') setRecovering(false);
     });
 
     return () => listener.subscription.unsubscribe();
@@ -45,6 +49,8 @@ export function AuthProvider({ children }) {
     setProfile,
     refreshProfile,
     loading,
+    recovering,
+    finishRecovery: () => setRecovering(false),
   };
   return createElement(AuthContext.Provider, { value }, children);
 }

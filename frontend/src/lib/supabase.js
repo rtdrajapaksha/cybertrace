@@ -21,6 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     storage: Platform.OS === 'web' ? undefined : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web, read the session from email links (password reset, confirm).
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

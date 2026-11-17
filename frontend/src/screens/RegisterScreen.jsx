@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Banner, Button, Field, HeroHeader, Muted, Sheet, TextLink } from '../components/ui';
+import { Banner, Button, Field, HeroHeader, Muted, PasswordStrength, Sheet, TextLink } from '../components/ui';
 import { brand, space, useTheme } from '../theme/theme';
-import { signUp, validateRegistration } from '../services/authService';
+import { PASSWORD_RULES, passwordStrength, signUp, validateRegistration } from '../services/authService';
 
 export default function RegisterScreen({ navigation }) {
   const { colors } = useTheme();
@@ -70,6 +70,7 @@ export default function RegisterScreen({ navigation }) {
               autoComplete="new-password"
               onSubmitEditing={handleRegister}
             />
+            <PasswordStrength password={password} strength={passwordStrength(password)} rules={PASSWORD_RULES} />
 
             {error ? <Banner text={error} tone="danger" icon="alert-circle" /> : null}
             {info ? <Banner text={info} tone="mint" icon="checkmark-circle" /> : null}

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Card, ConfirmDialog, EmptyState, Muted, RiskBadge, Screen, T, formatDate,
+  Card, ConfirmDialog, EmptyState, Muted, PageTitle, RiskBadge, Screen, T, formatDate,
 } from '../components/ui';
 import { font, radius, space, useTheme } from '../theme/theme';
 import { useScans } from '../state/scanStore';
@@ -36,8 +36,7 @@ export default function PreviousReportsScreen({ navigation }) {
 
   return (
     <Screen>
-      <T variant="h1" style={{ marginTop: space.md }}>Scan history</T>
-      <Muted style={{ marginBottom: space.md }}>{scans.length} {scans.length === 1 ? 'scan' : 'scans'} saved</Muted>
+      <PageTitle prompt="history" title="Scan history" subtitle={`${scans.length} ${scans.length === 1 ? 'scan' : 'scans'} saved`} />
 
       {scans.length === 0 ? (
         <EmptyState
