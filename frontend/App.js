@@ -1,42 +1,73 @@
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import {
+  useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold,
+} from '@expo-google-fonts/inter';
 
 import { AuthProvider, useAuth } from './src/state/authStore';
+import { ScanProvider } from './src/state/scanStore';
+import { ThemeProvider, useTheme, brand } from './src/theme/theme';
+import NavigationBar from './src/components/NavigationBar';
+
 import LandingScreen from './src/screens/LandingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import UserDashboardScreen from './src/screens/UserDashboardScreen';
+import NewScanScreen from './src/screens/NewScanScreen';
+import AnalysisInProgressScreen from './src/screens/AnalysisInProgressScreen';
+import AnalysisResultsScreen from './src/screens/AnalysisResultsScreen';
+import AIRecommendationsScreen from './src/screens/AIRecommendationsScreen';
+import PreviousReportsScreen from './src/screens/PreviousReportsScreen';
+import ReportPreviewScreen from './src/screens/ReportPreviewScreen';
+import UserProfileScreen from './src/screens/UserProfileScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-const navigationTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: '#0B1220',
-  },
-};
+// Bottom tabs shown after login (report 3.4: persistent navigation bar).
+function MainTabs() {
+  return (
+    <Tab.Navigator tabBar={(props) => <NavigationBar {...props} />} screenOptions={{ headerShown: false }}>
+      <Tab.Screen name="Home" component={UserDashboardScreen} />
+      <Tab.Screen name="Scan" component={NewScanScreen} />
+      <Tab.Screen name="History" component={PreviousReportsScreen} />
+      <Tab.Screen name="Tips" component={AIRecommendationsScreen} />
+      <Tab.Screen name="Profile" component={UserProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 // Logged out -> Landing / Login / Register.
-// Logged in  -> Dashboard. Switching happens automatically when the
-// Supabase session changes, so screens never need to navigate after auth.
+// Logged in  -> tabs + detail screens. Switching happens automatically
+// when the Supabase session changes.
 function RootNavigator() {
   const { session, loading } = useAuth();
+  const { colors } = useTheme();
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0B1220', justifyContent: 'center' }}>
-        <ActivityIndicator color="#22D3EE" />
+      <View style={{ flex: 1, backgroundColor: brand.hero, justifyContent: 'center' }}>
+        <ActivityIndicator color={brand.accent} />
       </View>
     );
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       {session ? (
-        <Stack.Screen name="Dashboard" component={UserDashboardScreen} />
+        <>
+          <Stack.Screen name="Tabs" component={MainTabs} />
+          <Stack.Screen name="AnalysisInProgress" component={AnalysisInProgressScreen} options={{ gestureEnabled: false }} />
+          <Stack.Screen name="AnalysisResults" component={AnalysisResultsScreen} />
+          <Stack.Screen name="Recommendations" component={AIRecommendationsScreen} />
+          <Stack.Screen name="ReportPreview" component={ReportPreviewScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="Landing" component={LandingScreen} />
@@ -48,13 +79,39 @@ function RootNavigator() {
   );
 }
 
-export default function App() {
+function ThemedApp() {
+  const { colors, mode } = useTheme();
+  const base = mode === 'dark' ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    colors: { ...base.colors, background: colors.bg, card: colors.card, text: colors.text, primary: colors.primary, border: colors.border },
+  };
   return (
-    <AuthProvider>
-      <NavigationContainer theme={navigationTheme}>
-        <StatusBar style="light" />
+    <NavigationContainer theme={navTheme} documentTitle={{ formatter: () => 'CyberTrace' }}>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <ScanProvider>
         <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+      </ScanProvider>
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold,
+  });
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: brand.hero }} />;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ThemedApp />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

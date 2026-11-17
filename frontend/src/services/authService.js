@@ -61,11 +61,40 @@ export async function signOut() {
   if (error) throw new Error(friendlyMessage(error));
 }
 
+// Emails a password reset link. Always succeeds from the user's point of
+// view so the app never reveals whether an account exists (report 3.4).
+export async function sendPasswordReset(email) {
+  const clean = email?.trim().toLowerCase();
+  if (!clean || !EMAIL_PATTERN.test(clean)) throw new Error('Enter your email address first.');
+  const { error } = await supabase.auth.resetPasswordForEmail(clean);
+  if (error && /rate limit/i.test(error.message)) {
+    throw new Error('Too many requests. Please wait a minute and try again.');
+  }
+}
+
+export async function changePassword(newPassword) {
+  if (!newPassword || newPassword.length < 8) throw new Error('Password must be at least 8 characters.');
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(friendlyMessage(error));
+}
+
+// Users may only edit first_name, last_name and preferences (see migration).
+export async function updateProfile(userId, changes) {
+  const { data, error } = await supabase
+    .from('users')
+    .update(changes)
+    .eq('user_id', userId)
+    .select('user_id, email, first_name, last_name, role, plan, preferences, created_at')
+    .single();
+  if (error) throw new Error(friendlyMessage(error));
+  return data;
+}
+
 // The logged-in user's row from public.users (RLS only returns their own).
 export async function getProfile(userId) {
   const { data, error } = await supabase
     .from('users')
-    .select('user_id, email, first_name, last_name, role, plan')
+    .select('user_id, email, first_name, last_name, role, plan, preferences, created_at')
     .eq('user_id', userId)
     .single();
   if (error) throw new Error(friendlyMessage(error));

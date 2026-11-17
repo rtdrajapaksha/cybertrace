@@ -1,22 +1,23 @@
 import { useState } from 'react';
-import {
-  StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator,
-} from 'react-native';
-import { signIn, validateCredentials } from '../services/authService';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Banner, Button, Field, HeroHeader, Muted, Sheet, TextLink } from '../components/ui';
+import { brand, space, useTheme } from '../theme/theme';
+import { sendPasswordReset, signIn, validateCredentials } from '../services/authService';
 
 export default function LoginScreen({ navigation }) {
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // On success the auth listener in App.js switches to the Dashboard.
+  // On success the auth listener in App.js switches to the app.
   const handleLogin = async () => {
     const problem = validateCredentials({ email, password });
     if (problem) return setError(problem);
-
-    setError('');
-    setSubmitting(true);
+    setError(''); setInfo(''); setSubmitting(true);
     try {
       await signIn({ email, password });
     } catch (e) {
@@ -25,128 +26,63 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  const handleForgot = async () => {
+    setError(''); setInfo('');
+    try {
+      await sendPasswordReset(email);
+      setInfo('If an account exists for that email, a reset link is on its way.');
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Text style={styles.title}>Welcome back</Text>
-      <Text style={styles.subtitle}>Log in to view your privacy dashboard</Text>
-
-      <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor="#64748B"
-            autoCapitalize="none"
-            keyboardType="email-address"
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: brand.hero }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <HeroHeader
+            onBack={() => navigation.goBack()}
+            prompt="login"
+            title="Welcome back"
+            subtitle="Log in to see your privacy dashboard."
           />
-        </View>
+          <Sheet style={{ backgroundColor: colors.card, gap: space.md }}>
+            <Field
+              label="Email"
+              icon="mail-outline"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+            <Field
+              label="Password"
+              icon="lock-closed-outline"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Your password"
+              secure
+              autoComplete="password"
+              onSubmitEditing={handleLogin}
+            />
+            <View style={{ alignItems: 'flex-end' }}>
+              <TextLink label="Forgot password?" onPress={handleForgot} />
+            </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor="#64748B"
-            secureTextEntry
-          />
-        </View>
+            {error ? <Banner text={error} tone="danger" icon="alert-circle" /> : null}
+            {info ? <Banner text={info} tone="mint" icon="checkmark-circle" /> : null}
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <Button label="Log in" onPress={handleLogin} loading={submitting} style={{ marginTop: space.sm }} />
 
-        <Pressable
-          style={[styles.primaryButton, submitting && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={submitting}
-        >
-          {submitting
-            ? <ActivityIndicator color="#FFFFFF" />
-            : <Text style={styles.primaryButtonText}>Log In</Text>}
-        </Pressable>
-
-        <Pressable onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.linkText}>
-            Don&apos;t have an account? <Text style={styles.linkTextBold}>Sign up</Text>
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: space.sm }}>
+              <Muted>New to CyberTrace?</Muted>
+              <TextLink label="Create an account" onPress={() => navigation.replace('Register')} />
+            </View>
+          </Sheet>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B1220',
-    padding: 24,
-    paddingTop: 96,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  subtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    color: '#94A3B8',
-  },
-  form: {
-    marginTop: 32,
-    gap: 16,
-  },
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#CBD5E1',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#FFFFFF',
-    backgroundColor: '#111827',
-  },
-  primaryButton: {
-    marginTop: 8,
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  errorText: {
-    color: '#F87171',
-    fontSize: 14,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkText: {
-    marginTop: 4,
-    textAlign: 'center',
-    color: '#94A3B8',
-    fontSize: 14,
-  },
-  linkTextBold: {
-    color: '#7DD3FC',
-    fontWeight: '600',
-  },
-});
