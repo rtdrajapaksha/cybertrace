@@ -1,0 +1,5 @@
+# Regenerate with: python3 generate_data.py
+data/
+# Trained weights are hundreds of MB; share via Google Drive instead.
+models/
+__pycache__/

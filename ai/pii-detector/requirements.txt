@@ -1,0 +1,6 @@
+# Only needed for train.py. generate_data.py, baseline.py and evaluate.py
+# use the Python standard library.
+torch>=2.1
+transformers>=4.40
+accelerate>=0.26
+numpy>=1.24
